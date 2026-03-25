@@ -40,8 +40,20 @@ try:
     # python2
     from urlparse import urlparse
 except:
-    # python3
     from urllib.parse import urlparse
+
+def redact_sensitive_info(text):
+    if not text:
+        return text
+    if not isinstance(text, str):
+        if isinstance(text, bytes):
+            text = text.decode("utf-8", errors="replace")
+        else:
+            text = str(text)
+    patterns = ["secret_key", "token", "access_key"]
+    for p in patterns:
+        text = re.sub(r"(" + p + r"=[^\s]+)", p + "=****", text)
+    return text
 
 from .s3util import (
     get_s3_client,
@@ -1412,7 +1424,7 @@ class S3(object):
             if max_retry_count > 0:
                 self._jitter_sleep(i)
         raise MetaflowS3Exception(
-            "S3 operation failed.\n" "Key requested: %s\n" "Error: %s" % (url, error)
+            "S3 operation failed.\n" "Key requested: %s\n" "Error: %s" % (url, redact_sensitive_info(error))
         )
 
     # add some jitter to make sure retries are not synchronized
@@ -1481,7 +1493,7 @@ class S3(object):
                     raise MetaflowS3Exception(
                         "Getting S3 files failed.\n"
                         "First prefix requested: %s\n"
-                        "Error: %s" % (prefixes_and_ranges[0], stderr)
+                        "Error: %s" % (prefixes_and_ranges[0], redact_sensitive_info(stderr))
                     )
             else:
                 for line in stdout_lines:
@@ -1526,7 +1538,7 @@ class S3(object):
                     raise MetaflowS3Exception(
                         "Uploading S3 files failed.\n"
                         "First key: %s\n"
-                        "Error: %s" % (url_info[0][2]["key"], stderr)
+                        "Error: %s" % (url_info[0][2]["key"], redact_sensitive_info(stderr))
                     )
             else:
                 urls = set()
