@@ -1,0 +1,51 @@
+{
+  "name": "metaflow-vscode-extension",
+  "displayName": "Metaflow IDE",
+  "description": "Metaflow IDE experience — visual DAG, artifact browser, one-click debug",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "metaflow.showDag",
+        "title": "Metaflow: Show DAG"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "metaflow-explorer",
+          "title": "Metaflow",
+          "icon": "resources/metaflow-logo.svg"
+        }
+      ]
+    },
+    "views": {
+      "metaflow-explorer": [
+        {
+          "id": "metaflow-runs",
+          "name": "Past Runs & Artifacts",
+          "icon": "resources/metaflow-logo.svg"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.90.0",
+    "@types/node": "18.x",
+    "typescript": "^5.4.5"
+  }
+}

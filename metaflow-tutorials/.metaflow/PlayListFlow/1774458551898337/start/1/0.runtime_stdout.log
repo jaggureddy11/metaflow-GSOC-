@@ -1,0 +1,2 @@
+[MFLOG|0|2026-03-25T17:09:12.492588Z|runtime|2bd817ee-c242-4c75-9789-dbf1880cee12]Using metadata provider: local@/Users/apple/Desktop/PROJECTS/GSOC-Metaflow/metaflow-tutorials
+[MFLOG|0|2026-03-25T17:09:12.526174Z|runtime|1ba247f2-c92d-4199-9612-4b9db7b795f5]Using analysis from 'Run('MovieStatsFlow/1774458545879727')'
