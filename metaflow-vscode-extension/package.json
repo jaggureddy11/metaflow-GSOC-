@@ -15,9 +15,34 @@
     "commands": [
       {
         "command": "metaflow.showDag",
-        "title": "Metaflow: Show DAG"
+        "title": "Metaflow: Show DAG",
+        "category": "Metaflow"
+      },
+      {
+        "command": "metaflow.refreshRuns",
+        "title": "Refresh Metaflow Explorer",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "metaflow.viewArtifact",
+        "title": "Metaflow: View Artifact",
+        "category": "Metaflow"
+      },
+      {
+        "command": "metaflow.viewLogs",
+        "title": "Metaflow: View Logs",
+        "category": "Metaflow"
       }
     ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "metaflow.refreshRuns",
+          "when": "view == metaflow-runs",
+          "group": "navigation"
+        }
+      ]
+    },
     "viewsContainers": {
       "activitybar": [
         {
