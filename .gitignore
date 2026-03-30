@@ -3,15 +3,34 @@ __pycache__/
 *.py[cod]
 *$py.class
 venv/
+.venv/
+env/
 .env
 
 # Metaflow local state
 .metaflow/
+*.metaflow
+*.metaflow_spin
+metaflow_card_cache/
 
 # VS Code extension
 metaflow-vscode-extension/node_modules/
 metaflow-vscode-extension/out/
 .vscode-test/
+.vscode/
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+stubs/version.py
+
+# devtools
+.devtools
+
+# GSoC Drafts
+gsoc_proof_of_work.md
+gsoc_proposal_summary.md
 
 # OS files
 .DS_Store
