@@ -1,0 +1,17 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.env
+
+# Metaflow local state
+.metaflow/
+
+# VS Code extension
+metaflow-vscode-extension/node_modules/
+metaflow-vscode-extension/out/
+.vscode-test/
+
+# OS files
+.DS_Store
