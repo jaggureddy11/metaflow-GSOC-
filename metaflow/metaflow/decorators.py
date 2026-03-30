@@ -161,14 +161,41 @@ class Decorator(object):
         self._ran_init = True
 
     @classmethod
-    def extract_args_kwargs_from_decorator_spec(cls, deco_spec):
+    def extract_args_kwargs_from_decorator_spec(cls, deco_spec: str) -> Tuple[List[Any], Dict[str, Any]]:
+        """Extract decorator arguments and keyword arguments from a decorator specification string.
+        
+        Parameters
+        ----------
+        deco_spec : str
+            Decorator specification string (e.g., "key1=value1,key2=value2")
+            
+        Returns
+        -------
+        Tuple[List[Any], Dict[str, Any]]
+            Tuple of (args_list, kwargs_dict) from the spec
+        """
         if len(deco_spec) == 0:
             return [], {}
 
         attrs = {}
-        # TODO: Do we really want to allow spaces in the names of attributes?!?
+        # Attribute names must be valid Python identifiers (alphanumeric + underscore)
+        # to ensure proper decorator specification parsing and avoid ambiguities.
+        import warnings
+        valid_attr_name = re.compile(r'^[a-zA-Z_][a-zA-Z0-9_]*$')
         for a in re.split(r""",(?=[\s\w]+=)""", deco_spec):
             name, val = a.split("=", 1)
+            name_clean = name.strip()
+            
+            # Validate attribute name format
+            if not valid_attr_name.match(name_clean):
+                warnings.warn(
+                    f"Decorator attribute name '{name_clean}' contains invalid characters. "
+                    f"Attribute names must start with letter/underscore and contain only "
+                    f"alphanumeric characters and underscores. This will become an error in a future version.",
+                    DeprecationWarning,
+                    stacklevel=3
+                )
+            
             try:
                 val_parsed = json.loads(val.strip().replace('\\"', '"'))
             except json.JSONDecodeError:
@@ -182,19 +209,31 @@ class Decorator(object):
                     except ValueError:
                         val_parsed = val.strip()
 
-            attrs[name.strip()] = val_parsed
+            attrs[name_clean] = val_parsed
 
         return [], attrs
 
     @classmethod
-    def parse_decorator_spec(cls, deco_spec):
+    def parse_decorator_spec(cls, deco_spec: str) -> "Decorator":
+        """Parse a decorator specification string and return a configured decorator instance.
+        
+        Parameters
+        ----------
+        deco_spec : str
+            Decorator specification string
+            
+        Returns
+        -------
+        Decorator
+            Configured decorator instance
+        """
         if len(deco_spec) == 0:
             return cls()
 
         _, kwargs = cls.extract_args_kwargs_from_decorator_spec(deco_spec)
         return cls(attributes=kwargs)
 
-    def make_decorator_spec(self):
+    def make_decorator_spec(self) -> str:
         # Make sure all attributes are evaluated
         self.external_init()
         attrs = {k: v for k, v in self.attributes.items() if v is not None}
@@ -326,9 +365,14 @@ class StepDecorator(Decorator):
     get an instance of MyDecorator, so you can keep step-specific
     state easily.
 
-    TODO (savin): Initialize the decorators with flow, graph,
-                  step.__name__ etc., so that we don't have to
-                  pass them around with every lifecycle call.
+    NOTE: Decorator context injection refactoring proposal:
+    Currently, decorators receive flow, graph, step_name, etc. as arguments to
+    step_init(). To reduce parameter passing, we could store these as instance
+    attributes after step_init() is called. This would require:
+    - Adding __post_init_attributes__ in Decorator base class
+    - Updating step_init() signature or adding a second initialization phase
+    - Ensuring thread safety in multi-threaded environments
+    For discussion, see: https://github.com/Netflix/metaflow/issues/XXX
     """
 
     def step_init(

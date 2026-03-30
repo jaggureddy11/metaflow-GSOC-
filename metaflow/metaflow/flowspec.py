@@ -8,7 +8,7 @@ from collections.abc import MutableMapping
 from enum import Enum
 from itertools import islice
 from types import FunctionType, MethodType
-from typing import Any, Callable, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union, Iterator, Type
 
 from . import cmd_with_io, parameters
 from .debug import debug
@@ -293,7 +293,7 @@ class FlowSpec(metaclass=FlowSpecMeta):
     # names starting with `_` as those are already excluded from `_get_parameters`.
     _NON_PARAMETERS = {"cmd", "foreach_stack", "index", "input", "script_name", "name"}
 
-    def __init__(self, use_cli=True):
+    def __init__(self, use_cli: bool = True) -> None:
         """
         Construct a FlowSpec
 
@@ -545,8 +545,15 @@ class FlowSpec(metaclass=FlowSpecMeta):
         self._graph_info = graph_info
 
     @classmethod
-    def _get_parameters(cls):
-        cached = cls._flow_state[FlowStateItems.CACHED_PARAMETERS]
+    def _get_parameters(cls) -> Iterator[Tuple[str, "Parameter"]]:
+        """
+        Get all parameters defined in this flow.
+        
+        Yields
+        ------
+        Iterator[Tuple[str, Parameter]]
+            Tuples of (parameter_name, parameter_object) for each parameter in the flow
+        """
         returned = set()
         if cached is not None:
             for set_config in cls._flow_state[FlowStateItems.SET_CONFIG_PARAMETERS]:
@@ -572,10 +579,10 @@ class FlowSpec(metaclass=FlowSpecMeta):
                 yield var, val
         cls._flow_state[FlowStateItems.CACHED_PARAMETERS] = build_list
 
-    def _set_datastore(self, datastore):
+    def _set_datastore(self, datastore: Any) -> None:
         self._datastore = datastore
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator:
         """
         [Legacy function - do not use]
 

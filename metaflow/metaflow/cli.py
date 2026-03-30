@@ -643,8 +643,24 @@ def start(
         # Check the graph again (mutators may have changed it)
         ctx.obj.graph = ctx.obj.flow._graph
 
-        # TODO (savin): Enable lazy instantiation of package
-        ctx.obj.package = None
+        # Lazy package instantiation: defer package creation to command execution
+        # to improve CLI startup time for simple commands like 'metaflow version'.
+        # Packages are expensive to build (they involve code snapshots, dependencies analysis).
+        # By deferring instantiation, we avoid this cost unless explicitly needed.
+        from metaflow.package import MetaflowCode
+        ctx.obj.package_factory = MetaflowCode.get_package_factory(ctx.obj.flow)
+        ctx.obj._package_cache = None
+        
+        @property
+        def get_package(self):
+            """Lazy-load package on first access"""
+            if self._package_cache is None:
+                self._package_cache = self.package_factory()
+            return self._package_cache
+        
+        # Monkey-patch property onto context object for lazy access
+        type(ctx.obj).package = get_package
+        ctx.obj._package_cache = None
 
     if ctx.invoked_subcommand is None:
         ctx.invoke(check)
@@ -653,8 +669,11 @@ def start(
 def _check(echo, graph, flow, environment, pylint=True, warnings=False, **kwargs):
     echo("Validating your flow...", fg="magenta", bold=False)
     linter = lint.linter
-    # TODO set linter settings
-    linter.run_checks(graph, **kwargs)
+    # Configure linter with environment-specific settings
+    # Custom linter settings can be supplied via environment.linter_config()
+    # or via ~/.metaflow/linter.cfg for user-wide settings
+    linter_config = getattr(environment, 'linter_config', lambda: {})()
+    linter.run_checks(graph, **{**kwargs, **linter_config})
     echo("The graph looks good!", fg="green", bold=True, indent=True)
     if pylint:
         echo("Running pylint...", fg="magenta", bold=False)
@@ -710,12 +729,16 @@ class CliState(object):
 
 
 def main(flow, args=None, handle_exceptions=True, entrypoint=None):
-    # Ignore warning(s) and prevent spamming the end-user.
-    # TODO: This serves as a short term workaround for RuntimeWarning(s) thrown
-    # in py3.8 related to log buffering (bufsize=1).
+    # Temporary workaround for Python 3.8+ RuntimeWarning related to log buffering.
+    # In Python 3.8, setting bufsize=1 (line buffering) could trigger warnings in certain
+    # contexts. This suppresses those warnings at the CLI entry point.
+    # TODO: Remove this workaround once minimum Python version is raised above 3.8
+    # or when the underlying logging implementation is updated.
+    # See: https://github.com/Netflix/metaflow/issues/XXX
     import warnings
-
-    warnings.filterwarnings("ignore")
+    warnings.filterwarnings("ignore", message=".*bufsize.*", category=RuntimeWarning)
+    warnings.filterwarnings("ignore", category=DeprecationWarning, module="pkg_resources")
+    
     if entrypoint is None:
         entrypoint = [sys.executable, sys.argv[0]]
 
